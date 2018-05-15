@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <title>表白神器--星云链DAPP</title>
+    <link rel="stylesheet" href="css/style.css" media="screen" type="text/css" />
+    <link rel="stylesheet" href="css/jquery.mloading.css">
+    <style type="text/css">
+    </style>
+</head>
+
+<body>
+
+    <div class="container">
+        <div id="nowallet" style="display:none">
+            注意: 请安装
+            <a target="_blank" href="https://github.com/ChengOrangeJu/WebExtensionWallet" class="blue-color">浏览器插件钱包</a> 后使用全部功能
+        </div>
+        <form id="contact">
+            <h3>表白神器--星云链DAPP</h3>
+            <h4>请填写以下内容，然后让你爱的人看之后的页面!</h4>
+            <fieldset>
+                <input placeholder="你的昵称" name="me" type="text" tabindex="1" maxlength="5" required>
+            </fieldset>
+            <fieldset>
+                <input placeholder="爱的人昵称" name="you" type="text" tabindex="2" maxlength="5" required>
+            </fieldset>
+            <fieldset>
+                <textarea placeholder="你想说的话限128字内" name="yi" tabindex="5" maxlength="128" required></textarea>
+            </fieldset>
+            <fieldset>
+                <input placeholder="终极表白语10字内" name="wu" type="text" tabindex="2" maxlength="10" required>
+            </fieldset>
+            <fieldset>
+                <input placeholder="年：如2018" name="year" type="text" tabindex="3" required>
+            </fieldset>
+            <fieldset>
+                <input placeholder="月：如7" name="yue" type="text" tabindex="4" required>
+            </fieldset>
+            <fieldset>
+                <input placeholder="日：如20" name="ri" type="text" tabindex="4" required>
+            </fieldset>
+            <fieldset>
+                <button name="submit" type="submit" id="contact-submit" data-submit="...Sending">提交</button>
+            </fieldset>
+        </form>
+
+
+    </div>
+    <script src="renxi/nebulas.min.js"></script>
+    <script src="renxi/nebPay.js"></script>
+    <script src="renxi/jquery.min.js"></script>
+    <script src="renxi/jquery.mloading.js"></script>
+    <script>
+        var HttpRequest = require("nebulas").HttpRequest;
+        var Neb = require("nebulas").Neb;
+        var Account = require("nebulas").Account;
+        var Transaction = require("nebulas").Transaction;
+        var Unit = require("nebulas").Unit;
+        var Utils = require("nebulas").Utils;
+        var myneb = new Neb();
+        var NebPay = require("nebpay");
+        var nebPay = new NebPay();
+        // ****Testnet****//
+        myneb.setRequest(new HttpRequest("https://testnet.nebulas.io"));
+        var dapp_address = "n235wTz93RrrBBVBqWWAyqVW2CJ85raFjFw";
+
+        var nasApi = myneb.api;
+        // ****Maintnet****9c68c2662f6895622e93aa2112cf2b0d0994ee57d232ffe9d89120578d046458//
+        // myneb.setRequest(new HttpRequest("https://mainnet.nebulas.io"));
+        // var dapp_address = "n1wTJuDh8ePsMkjQZeTxd1oczUCL2QJDC2k";
+        $(function () {
+            checkWallet();
+            $("#contact").submit(function () {
+                $("body").mLoading({
+                    text: "正在写入区块链..."
+                });
+                // alert("")
+                write(function (rep) {
+                    if (rep.status == 0) {
+                        $("body").mLoading({
+                            text: "已成功为您生成网站，即将跳转..",
+                            icon: "",
+                            content: "生成成功："
+                        });
+                        setTimeout(function () {
+                            $("body").mLoading("hide")
+                            location.href = "qixi.html?key=" + rep.has
+                        }, 2000)
+                    } else {
+                        $("body").mLoading("hide")
+                        alert("生成失败！请重试")
+                    }
+                });
+
+                return false;
+            })
+        })
+
+        function write(callback) {
+            debugger;
+            var _call = callback || $.noop;
+            var callArgs = JSON.stringify([
+                $('[name="me"]').val(),
+                $('[name="you"]').val(),
+                $('[name="yi"]').val(),
+                $('[name="wu"]').val(),
+                $('[name="year"]').val(),
+                $('[name="yue"]').val(),
+                $('[name="ri"]').val()
+            ]);
+
+            var _loopCall = null;
+            var _loopCount = 0;
+            var _listener = function (rep) {
+                // debugger;
+                console.log(rep)
+                _loopCount++;
+                if (typeof rep == "string" && rep.indexOf("Error") != -1) {
+                    clearTimeout(_loopCall)
+                } else {
+                    nasApi.getTransactionReceipt({
+                        hash: rep.txhash
+                    }).then(function (receipt) {
+                        if (receipt.status === 1) {
+                            // 交易成功
+                            _call.call(this, JSON.parse(receipt.execute_result))
+                        } else {
+                            if (_loopCount >= 60) {
+                                alert("交易失败，请刷新后重试")
+                            } else {
+                                _loopCall = setTimeout(function () {
+                                    _listener(rep)
+                                }, 1000)
+                            }
+                        }
+                    });
+                }
+            }
+
+            var serialNumber = nebPay.call(dapp_address, 0, "write", callArgs, {
+                qrcode: {
+                    showQRCode: false,
+                    container: undefined
+                },
+                goods: {
+                    name: "wirte",
+                    desc: "Wirte something for your futrue"
+                },
+                listener: _listener
+            });
+
+
+        }
+
+        function checkWallet() {
+            if (typeof (webExtensionWallet) === "undefined") {
+                $("#nowallet").show("fade")
+            } else {
+                console.log('星云钱包环境运行成功');
+            }
+        }
+    </script>
+</body>
+
+</html>
