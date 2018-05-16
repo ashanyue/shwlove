@@ -6,6 +6,7 @@
     <title>表白神器--星云链DAPP</title>
     <link rel="stylesheet" href="css/style.css" media="screen" type="text/css" />
     <link rel="stylesheet" href="css/jquery.mloading.css">
+    <link rel="stylesheet" href="bootstrap-datepicker/css/bootstrap-datepicker.min.css">
     <style type="text/css">
     </style>
 </head>
@@ -33,14 +34,14 @@
                 <input placeholder="终极表白语10字内" name="wu" type="text" tabindex="2" maxlength="10" required>
             </fieldset>
             <fieldset>
-                <input placeholder="年：如2018" name="year" type="text" tabindex="3" required>
+                <input id="meettime"  onClick="WdatePicker({maxDate:'%y-%M-%d'})" placeholder="选择相识日期" name="year" type="text" tabindex="3" required>
             </fieldset>
-            <fieldset>
+            <!-- <fieldset>
                 <input placeholder="月：如7" name="yue" type="text" tabindex="4" required>
             </fieldset>
             <fieldset>
                 <input placeholder="日：如20" name="ri" type="text" tabindex="4" required>
-            </fieldset>
+            </fieldset> -->
             <fieldset>
                 <button name="submit" type="submit" id="contact-submit" data-submit="...Sending">提交</button>
             </fieldset>
@@ -51,6 +52,8 @@
     <script src="renxi/nebulas.min.js"></script>
     <script src="renxi/nebPay.js"></script>
     <script src="renxi/jquery.min.js"></script>
+    <script src="My97DatePicker/WdatePicker.js"></script>
+    <script src="renxi/dayjs.min.js"></script>
     <script src="renxi/jquery.mloading.js"></script>
     <script>
         var HttpRequest = require("nebulas").HttpRequest;
@@ -62,16 +65,13 @@
         var myneb = new Neb();
         var NebPay = require("nebpay");
         var nebPay = new NebPay();
-        // ****Testnet****//
-        myneb.setRequest(new HttpRequest("https://testnet.nebulas.io"));
-        var dapp_address = "n1fH2V6vM7LNFuLbDe4CwVFgQxQTUkg73rH";
-
+      
         var nasApi = myneb.api;
-        // ****Maintnet****9c68c2662f6895622e93aa2112cf2b0d0994ee57d232ffe9d89120578d046458//
-        // myneb.setRequest(new HttpRequest("https://mainnet.nebulas.io"));
-        // var dapp_address = "n1fH2V6vM7LNFuLbDe4CwVFgQxQTUkg73rH";
+        myneb.setRequest(new HttpRequest("https://mainnet.nebulas.io"));
+        var dapp_address = "n1fH2V6vM7LNFuLbDe4CwVFgQxQTUkg73rH";
         $(function () {
             checkWallet();
+            
             $("#contact").submit(function () {
                 $("body").mLoading({
                     text: "正在写入区块链..."
@@ -100,15 +100,16 @@
 
         function write(callback) {
             // debugger;
+            var meetDate = dayjs($('[name="year"]').val())
             var _call = callback || $.noop;
             var callArgs = JSON.stringify([
                 $('[name="me"]').val(),
                 $('[name="you"]').val(),
                 $('[name="yi"]').val(),
                 $('[name="wu"]').val(),
-                $('[name="year"]').val(),
-                $('[name="yue"]').val(),
-                $('[name="ri"]').val()
+                meetDate.year(),
+                meetDate.month(),
+                meetDate.date()
             ]);
 
             var _loopCall = null;
